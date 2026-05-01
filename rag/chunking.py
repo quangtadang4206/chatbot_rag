@@ -1,7 +1,10 @@
+import logging
 import os
 from typing import List
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter, CharacterTextSplitter
+
+logger = logging.getLogger(__name__)
 
 # chunk_size=512, overlap~15% — benchmark Vecta 2026 đạt 69% accuracy tổng quát
 _RECURSIVE_DEFAULTS = {"chunk_size": 512, "chunk_overlap": 75}
@@ -118,8 +121,14 @@ def chunk_document_based(docs: List[Document]) -> List[Document]:
                     else:
                         result.append(section)
                 continue
+        elif is_docx and source and not os.path.exists(source):
+            logger.warning(
+                "chunk_document_based: file không tồn tại tại '%s', fallback sang recursive. "
+                "Gọi split_documents() TRƯỚC khi xóa temp file.",
+                source,
+            )
 
-        # Fallback: PDF hoặc DOCX không có heading
+        # Fallback: PDF hoặc DOCX không có heading / không tìm thấy file gốc
         result.extend(fallback_splitter.split_documents([doc]))
 
     return result

@@ -69,42 +69,53 @@ with st.sidebar:
 
     process_btn = st.button("🚀 Xử lý tài liệu", use_container_width=True, type="primary")
 
+    MAX_FILE_SIZE_MB = 50
+
     if process_btn:
         files_to_process = st.session_state.get("cached_files", [])
         if not files_to_process:
             st.warning("Vui lòng chọn ít nhất một file.")
         else:
-            with st.spinner("Đang xử lý tài liệu..."):
-                try:
-                    all_docs = []
+            oversized = [f["name"] for f in files_to_process
+                         if len(f["data"]) > MAX_FILE_SIZE_MB * 1024 * 1024]
+            if oversized:
+                st.error(f"File vượt quá {MAX_FILE_SIZE_MB}MB: {', '.join(oversized)}")
+            else:
+                with st.spinner("Đang xử lý tài liệu..."):
                     tmp_files = []
-                    for file_data in files_to_process:
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=file_data["suffix"]) as tmp:
-                            tmp.write(file_data["data"])
-                            tmp_path = tmp.name
-                        docs = load_document(tmp_path)
-                        all_docs.extend(docs)
-                        tmp_files.append(tmp_path)
+                    try:
+                        all_docs = []
+                        for file_data in files_to_process:
+                            with tempfile.NamedTemporaryFile(delete=False, suffix=file_data["suffix"]) as tmp:
+                                tmp.write(file_data["data"])
+                                tmp_path = tmp.name
+                            tmp_files.append(tmp_path)
+                            docs = load_document(tmp_path)
+                            all_docs.extend(docs)
 
-                    # Chunking trước, xóa temp file sau — document-based strategy cần đọc lại file gốc
-                    chunks = split_documents(all_docs, strategy=chunk_strategy)
-                    for tmp_path in tmp_files:
-                        os.unlink(tmp_path)
-                    chunks = [c for c in chunks if c.page_content.strip()]
-                    if not chunks:
-                        st.error("Không trích xuất được nội dung từ tài liệu. File có thể là PDF scan (ảnh) hoặc bị lỗi.")
-                        st.stop()
-                    vectorstore = add_documents(chunks)
-                    retriever = get_retriever(vectorstore, strategy=retriever_strategy, docs=chunks)
-                    chain = create_rag_chain(retriever, prompt_type=prompt_type)
+                        # Chunking trước, xóa temp file sau — document-based strategy cần đọc lại file gốc
+                        chunks = split_documents(all_docs, strategy=chunk_strategy)
+                        chunks = [c for c in chunks if c.page_content.strip()]
+                        if not chunks:
+                            st.error("Không trích xuất được nội dung từ tài liệu. File có thể là PDF scan (ảnh) hoặc bị lỗi.")
+                            st.stop()
+                        vectorstore = add_documents(chunks)
+                        retriever = get_retriever(vectorstore, strategy=retriever_strategy, docs=chunks)
+                        chain = create_rag_chain(retriever, prompt_type=prompt_type)
 
-                    st.session_state["retriever"] = retriever
-                    st.session_state["chain"] = chain
-                    st.session_state["vectorstore_ready"] = True
+                        st.session_state["retriever"] = retriever
+                        st.session_state["chain"] = chain
+                        st.session_state["vectorstore_ready"] = True
 
-                    st.success(f"✅ Đã xử lý {len(all_docs)} trang / {len(chunks)} đoạn văn bản.")
-                except Exception as e:
-                    st.error(f"Lỗi xử lý tài liệu: {e}")
+                        st.success(f"✅ Đã xử lý {len(all_docs)} trang / {len(chunks)} đoạn văn bản.")
+                    except Exception as e:
+                        st.error(f"Lỗi xử lý tài liệu: {e}")
+                    finally:
+                        for p in tmp_files:
+                            try:
+                                os.unlink(p)
+                            except OSError:
+                                pass
 
     # Trạng thái vector store
     if st.session_state.get("vectorstore_ready"):

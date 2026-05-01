@@ -12,19 +12,20 @@ Dispatcher: `split_documents(docs, strategy="recursive")`
 
 | Strategy | Hàm | Khi nào dùng |
 |----------|-----|-------------|
-| `"semantic"` | `chunk_semantic()` | Báo cáo, hợp đồng, văn xuôi dài |
+| `"document"` | `chunk_document_based()` | DOCX có heading rõ ràng, tài liệu pháp lý |
 | `"recursive"` | `chunk_recursive()` | Tài liệu tổng quát **(mặc định)** |
+| `"semantic"` | `chunk_semantic()` | Báo cáo, hợp đồng, văn xuôi dài |
 | `"fixed"` | `chunk_fixed()` | FAQ, quy trình, bảng biểu |
 
 ## Retrieval — `rag/retriever.py`
 
-Dispatcher: `get_retriever(vectorstore, strategy="mmr")`
+Dispatcher: `get_retriever(vectorstore, strategy="multiquery", docs=None)`
 
 | Strategy | Hàm | Khi nào dùng |
 |----------|-----|-------------|
-| `"mmr"` | `get_mmr_retriever()` | Tài liệu dài, tránh kết quả trùng lặp **(mặc định)** |
-| `"similarity"` | `get_similarity_retriever()` | Q&A đơn giản, FAQ |
-| `"threshold"` | `get_threshold_retriever()` | Cần lọc kết quả có độ tin cậy thấp |
+| `"multiquery"` | `get_multiquery_retriever()` | Câu hỏi mơ hồ, tài liệu dài **(mặc định)** |
+| `"hybrid"` | `get_hybrid_retriever()` | Cần bắt tên riêng, mã số, thuật ngữ chuyên ngành |
+| `"rerank"` | `get_rerank_retriever()` | Cần độ chính xác cao, kết quả ít nhưng chắc |
 
 ## Prompt — `rag/chain.py`
 
