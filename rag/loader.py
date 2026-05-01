@@ -1,11 +1,11 @@
 import os
 from typing import List
 from langchain_core.documents import Document
-from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
+from langchain_community.document_loaders import PyMuPDFLoader, Docx2txtLoader
 
 
 def load_pdf(file_path: str) -> List[Document]:
-    loader = PyPDFLoader(file_path)
+    loader = PyMuPDFLoader(file_path)
     docs = loader.load()
     for doc in docs:
         doc.metadata["file_type"] = "pdf"

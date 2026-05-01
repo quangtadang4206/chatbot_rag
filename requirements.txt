@@ -6,6 +6,7 @@ langchain-experimental==0.3.4
 langchain-community==0.3.24
 python-dotenv==1.1.0
 pypdf
+pymupdf
 docx2txt
 python-docx
 chromadb==0.5.23
