@@ -90,6 +90,10 @@ with st.sidebar:
                     chunks = split_documents(all_docs, strategy=chunk_strategy)
                     for tmp_path in tmp_files:
                         os.unlink(tmp_path)
+                    chunks = [c for c in chunks if c.page_content.strip()]
+                    if not chunks:
+                        st.error("Không trích xuất được nội dung từ tài liệu. File có thể là PDF scan (ảnh) hoặc bị lỗi.")
+                        st.stop()
                     vectorstore = add_documents(chunks)
                     retriever = get_retriever(vectorstore, strategy=retriever_strategy, docs=chunks)
                     chain = create_rag_chain(retriever, prompt_type=prompt_type)
