@@ -1,3 +1,4 @@
 libgomp1
 libgcc-s1
 libffi-dev
+zlib1g-dev
